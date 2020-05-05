@@ -5,6 +5,7 @@
  * Copyright 2005 Phil Blundell
  * Copyright 2010, 2011 David Jander <david@protonic.nl>
  */
+#define DEBUG
 
 #include <linux/module.h>
 
@@ -368,9 +369,12 @@ static void gpio_keys_gpio_report_event(struct gpio_button_data *bdata)
 	}
 
 	if (type == EV_ABS) {
+		printk(KERN_DEBUG "gpio_keys_gpio_report_event: EV_ABS: state = %d, btn code: %u, btn value: %i",
+			state, button->code, button->value);
 		if (state)
 			input_event(input, type, button->code, button->value);
 	} else {
+		printk(KERN_DEBUG "gpio_keys_gpio_report_event: not EV_ABS: state = %d, bdata->code = %u", state, *bdata->code);
 		input_event(input, type, *bdata->code, state);
 	}
 	input_sync(input);
@@ -392,6 +396,7 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 	struct gpio_button_data *bdata = dev_id;
 
 	BUG_ON(irq != bdata->irq);
+	printk(KERN_DEBUG "gpio_keys_gpio_isr: start");
 
 	if (bdata->button->wakeup) {
 		const struct gpio_keys_button *button = bdata->button;
@@ -404,6 +409,7 @@ static irqreturn_t gpio_keys_gpio_isr(int irq, void *dev_id)
 			 * already released by the time we got interrupt
 			 * handler to run.
 			 */
+			printk(KERN_DEBUG "gpio_keys_gpio_isr: input_report_key: %u", button->code);
 			input_report_key(bdata->input, button->code, 1);
 		}
 	}
@@ -420,9 +426,11 @@ static void gpio_keys_irq_timer(struct timer_list *t)
 	struct gpio_button_data *bdata = from_timer(bdata, t, release_timer);
 	struct input_dev *input = bdata->input;
 	unsigned long flags;
+	printk(KERN_DEBUG "gpio_keys_irq_timer");
 
 	spin_lock_irqsave(&bdata->lock, flags);
 	if (bdata->key_pressed) {
+		printk(KERN_DEBUG "gpio_keys_irq_timer: input_event: %u", *bdata->code);
 		input_event(input, EV_KEY, *bdata->code, 0);
 		input_sync(input);
 		bdata->key_pressed = false;
@@ -437,6 +445,7 @@ static irqreturn_t gpio_keys_irq_isr(int irq, void *dev_id)
 	unsigned long flags;
 
 	BUG_ON(irq != bdata->irq);
+	printk(KERN_DEBUG "gpio_keys_irq_isr: start");
 
 	spin_lock_irqsave(&bdata->lock, flags);
 
@@ -444,6 +453,7 @@ static irqreturn_t gpio_keys_irq_isr(int irq, void *dev_id)
 		if (bdata->button->wakeup)
 			pm_wakeup_event(bdata->input->dev.parent, 0);
 
+		printk(KERN_DEBUG "gpio_keys_irq_isr: input_event: %u", *bdata->code);
 		input_event(input, EV_KEY, *bdata->code, 1);
 		input_sync(input);
 
@@ -488,12 +498,14 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 	unsigned long irqflags;
 	int irq;
 	int error;
+	printk(KERN_DEBUG "gpio_keys_setup_key: start");
 
 	bdata->input = input;
 	bdata->button = button;
 	spin_lock_init(&bdata->lock);
 
 	if (child) {
+		printk(KERN_DEBUG "gpio_keys_setup_key:  if (child) {, getting using devm_fwnode_gpiod_get");
 		bdata->gpiod = devm_fwnode_gpiod_get(dev, child,
 						     NULL, GPIOD_IN, desc);
 		if (IS_ERR(bdata->gpiod)) {
@@ -518,8 +530,12 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 		 */
 		unsigned flags = GPIOF_IN;
 
-		if (button->active_low)
+		printk(KERN_DEBUG "gpio_keys_setup_key: legacy gpio branch");
+
+		if (button->active_low) {
+			printk(KERN_DEBUG "gpio_keys_setup_key: is active low");
 			flags |= GPIOF_ACTIVE_LOW;
+		}
 
 		error = devm_gpio_request_one(dev, button->gpio, flags, desc);
 		if (error < 0) {
@@ -546,6 +562,7 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 		}
 
 		if (button->irq) {
+			printk(KERN_DEBUG "gpio_keys_setup_key: button already has irq = %u", button->irq);
 			bdata->irq = button->irq;
 		} else {
 			irq = gpiod_to_irq(bdata->gpiod);
@@ -556,11 +573,13 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 					button->gpio, error);
 				return error;
 			}
+			printk(KERN_DEBUG "gpio_keys_setup_key: gpiod_to_irq returned irq = %u", irq);
 			bdata->irq = irq;
 		}
 
 		INIT_DELAYED_WORK(&bdata->work, gpio_keys_gpio_work_func);
 
+		printk(KERN_DEBUG "gpio_keys_setup_key: using gpio_keys_gpio_isr");
 		isr = gpio_keys_gpio_isr;
 		irqflags = IRQF_TRIGGER_RISING | IRQF_TRIGGER_FALLING;
 
@@ -598,6 +617,7 @@ static int gpio_keys_setup_key(struct platform_device *pdev,
 		bdata->release_delay = button->debounce_interval;
 		timer_setup(&bdata->release_timer, gpio_keys_irq_timer, 0);
 
+		printk(KERN_DEBUG "gpio_keys_setup_key: using gpio_keys_irq_isr");
 		isr = gpio_keys_irq_isr;
 		irqflags = 0;
 

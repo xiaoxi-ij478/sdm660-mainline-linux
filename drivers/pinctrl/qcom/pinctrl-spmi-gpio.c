@@ -2,7 +2,7 @@
 /*
  * Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  */
-
+#define DEBUG
 #include <linux/gpio/driver.h>
 #include <linux/interrupt.h>
 #include <linux/module.h>
@@ -376,6 +376,8 @@ static int pmic_gpio_config_get(struct pinctrl_dev *pctldev,
 	unsigned param = pinconf_to_config_param(*config);
 	struct pmic_gpio_pad *pad;
 	unsigned arg;
+	// removeme
+	printk(KERN_DEBUG "pmic_gpio_config_get(%u)\n", pin);
 
 	pad = pctldev->desc->pins[pin].drv_data;
 
@@ -457,6 +459,8 @@ static int pmic_gpio_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 	unsigned param, arg;
 	unsigned int val;
 	int i, ret;
+	// removeme
+	printk(KERN_DEBUG "pmic_gpio_config_set(%u) nconfs=%u\n", pin, nconfs);
 
 	pad = pctldev->desc->pins[pin].drv_data;
 
@@ -464,69 +468,85 @@ static int pmic_gpio_config_set(struct pinctrl_dev *pctldev, unsigned int pin,
 	for (i = 0; i < nconfs; i++) {
 		param = pinconf_to_config_param(configs[i]);
 		arg = pinconf_to_config_argument(configs[i]);
+		printk(KERN_DEBUG "    param = %u, arg = %u\n", param, arg);
 
 		switch (param) {
 		case PIN_CONFIG_DRIVE_PUSH_PULL:
+			printk(KERN_DEBUG "    set PIN_CONFIG_DRIVE_PUSH_PULL\n");
 			pad->buffer_type = PMIC_GPIO_OUT_BUF_CMOS;
 			break;
 		case PIN_CONFIG_DRIVE_OPEN_DRAIN:
+			printk(KERN_DEBUG "    set PIN_CONFIG_DRIVE_OPEN_DRAIN\n");
 			if (!pad->have_buffer)
 				return -EINVAL;
 			pad->buffer_type = PMIC_GPIO_OUT_BUF_OPEN_DRAIN_NMOS;
 			break;
 		case PIN_CONFIG_DRIVE_OPEN_SOURCE:
+			printk(KERN_DEBUG "    set PIN_CONFIG_DRIVE_OPEN_SOURCE\n");
 			if (!pad->have_buffer)
 				return -EINVAL;
 			pad->buffer_type = PMIC_GPIO_OUT_BUF_OPEN_DRAIN_PMOS;
 			break;
 		case PIN_CONFIG_BIAS_DISABLE:
+			printk(KERN_DEBUG "    set PIN_CONFIG_BIAS_DISABLE\n");
 			pad->pullup = PMIC_GPIO_PULL_DISABLE;
 			break;
 		case PIN_CONFIG_BIAS_PULL_UP:
+			printk(KERN_DEBUG "    set PIN_CONFIG_BIAS_PULL_UP: PMIC_GPIO_PULL_UP_30\n");
 			pad->pullup = PMIC_GPIO_PULL_UP_30;
 			break;
 		case PIN_CONFIG_BIAS_PULL_DOWN:
+			printk(KERN_DEBUG "    set PIN_CONFIG_BIAS_PULL_DOWN\n");
 			if (arg)
 				pad->pullup = PMIC_GPIO_PULL_DOWN;
 			else
 				pad->pullup = PMIC_GPIO_PULL_DISABLE;
 			break;
 		case PIN_CONFIG_BIAS_HIGH_IMPEDANCE:
+			printk(KERN_DEBUG "    set PIN_CONFIG_BIAS_HIGH_IMPEDANCE\n");
 			pad->is_enabled = false;
 			break;
 		case PIN_CONFIG_POWER_SOURCE:
+			printk(KERN_DEBUG "    set PIN_CONFIG_POWER_SOURCE\n");
 			if (arg >= pad->num_sources)
 				return -EINVAL;
 			pad->power_source = arg;
 			break;
 		case PIN_CONFIG_INPUT_ENABLE:
+			printk(KERN_DEBUG "    set PIN_CONFIG_INPUT_ENABLE\n");
 			pad->input_enabled = arg ? true : false;
 			break;
 		case PIN_CONFIG_OUTPUT:
+			printk(KERN_DEBUG "    set PIN_CONFIG_OUTPUT\n");
 			pad->output_enabled = true;
 			pad->out_value = arg;
 			break;
 		case PMIC_GPIO_CONF_PULL_UP:
 			if (arg > PMIC_GPIO_PULL_UP_1P5_30)
 				return -EINVAL;
+			printk(KERN_DEBUG "    set PMIC_GPIO_CONF_PULL_UP = %u\n", arg);
 			pad->pullup = arg;
 			break;
 		case PMIC_GPIO_CONF_STRENGTH:
+			printk(KERN_DEBUG "    set PMIC_GPIO_CONF_STRENGTH = %u\n", arg);
 			if (arg > PMIC_GPIO_STRENGTH_LOW)
 				return -EINVAL;
 			pad->strength = arg;
 			break;
 		case PMIC_GPIO_CONF_ATEST:
+			printk(KERN_DEBUG "    set PMIC_GPIO_CONF_ATEST\n");
 			if (!pad->lv_mv_type || arg > 4)
 				return -EINVAL;
 			pad->atest = arg;
 			break;
 		case PMIC_GPIO_CONF_ANALOG_PASS:
+			printk(KERN_DEBUG "    set PMIC_GPIO_CONF_ANALOG_PASS\n");
 			if (!pad->lv_mv_type)
 				return -EINVAL;
 			pad->analog_pass = true;
 			break;
 		case PMIC_GPIO_CONF_DTEST_BUFFER:
+			printk(KERN_DEBUG "    set PMIC_GPIO_CONF_DTEST_BUFFER\n");
 			if (arg > 4)
 				return -EINVAL;
 			pad->dtest_buffer = arg;
@@ -795,23 +815,27 @@ static int pmic_gpio_populate(struct pmic_gpio_state *state,
 		pad->have_buffer = true;
 		/* Fall through */
 	case PMIC_GPIO_SUBTYPE_GPIOC_4CH:
+		printk(KERN_DEBUG "pmic_gpio_populate: num_sources = 4");
 		pad->num_sources = 4;
 		break;
 	case PMIC_GPIO_SUBTYPE_GPIO_8CH:
 		pad->have_buffer = true;
 		/* Fall through */
 	case PMIC_GPIO_SUBTYPE_GPIOC_8CH:
+		printk(KERN_DEBUG "pmic_gpio_populate: num_sources = 8");
 		pad->num_sources = 8;
 		break;
 	case PMIC_GPIO_SUBTYPE_GPIO_LV:
 		pad->num_sources = 1;
 		pad->have_buffer = true;
 		pad->lv_mv_type = true;
+		printk(KERN_DEBUG "pmic_gpio_populate: LV, num_sources = 1");
 		break;
 	case PMIC_GPIO_SUBTYPE_GPIO_MV:
 		pad->num_sources = 2;
 		pad->have_buffer = true;
 		pad->lv_mv_type = true;
+		printk(KERN_DEBUG "pmic_gpio_populate: MV, num_sources = 2");
 		break;
 	default:
 		dev_err(state->dev, "unknown GPIO type 0x%x\n", subtype);
@@ -874,6 +898,7 @@ static int pmic_gpio_populate(struct pmic_gpio_state *state,
 
 	pad->power_source = val >> PMIC_GPIO_REG_VIN_SHIFT;
 	pad->power_source &= PMIC_GPIO_REG_VIN_MASK;
+	printk(KERN_DEBUG "pmic_gpio_populate: power_source = %d", pad->power_source);
 
 	val = pmic_gpio_read(state, pad, PMIC_GPIO_REG_DIG_PULL_CTL);
 	if (val < 0)

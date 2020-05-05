@@ -3181,6 +3181,8 @@ static int _regulator_set_voltage_time(struct regulator_dev *rdev,
 				       int old_uV, int new_uV)
 {
 	unsigned int ramp_delay = 0;
+	
+	printk(KERN_DEBUG "    _regulator_set_voltage_time: %s: old %d -> new %d", rdev_get_name(rdev), old_uV, new_uV);
 
 	if (rdev->constraints->ramp_delay)
 		ramp_delay = rdev->constraints->ramp_delay;
@@ -3215,6 +3217,7 @@ static int _regulator_do_set_voltage(struct regulator_dev *rdev,
 	int old_uV = regulator_get_voltage_rdev(rdev);
 
 	trace_regulator_set_voltage(rdev_get_name(rdev), min_uV, max_uV);
+	printk(KERN_DEBUG "    _regulator_do_set_voltage: %s: to %d..%d uV", rdev_get_name(rdev), min_uV, max_uV);
 
 	min_uV += rdev->constraints->uV_offset;
 	max_uV += rdev->constraints->uV_offset;
@@ -3233,12 +3236,13 @@ static int _regulator_do_set_voltage(struct regulator_dev *rdev,
 	if (ops->set_voltage) {
 		ret = _regulator_call_set_voltage(rdev, min_uV, max_uV,
 						  &selector);
-
+		printk(KERN_DEBUG "    after _regulator_call_set_voltage(%d..%d), selector = %u", min_uV, max_uV, selector);
 		if (ret >= 0) {
-			if (ops->list_voltage)
+			if (ops->list_voltage) {
 				best_val = ops->list_voltage(rdev,
 							     selector);
-			else
+				printk(KERN_DEBUG "    have ops->list_votage, calculated best value = %d for selector %u", best_val, selector);
+			} else
 				best_val = regulator_get_voltage_rdev(rdev);
 		}
 

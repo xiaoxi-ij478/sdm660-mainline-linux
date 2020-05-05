@@ -5,6 +5,8 @@
 // Copyright 2007, 2008 Wolfson Microelectronics PLC.
 // Copyright 2008 SlimLogic Ltd.
 
+#define DEBUG
+
 #include <linux/kernel.h>
 #include <linux/err.h>
 #include <linux/delay.h>
@@ -12,6 +14,7 @@
 #include <linux/regulator/consumer.h>
 #include <linux/regulator/driver.h>
 #include <linux/module.h>
+#include <linux/stacktrace.h>
 
 #include "internal.h"
 
@@ -623,6 +626,9 @@ int regulator_desc_list_voltage_linear_range(const struct regulator_desc *desc,
 
 		return range->min_uV + (range->uV_step * selector);
 	}
+	
+	printk(KERN_DEBUG "    regulator_desc_list_voltage_linear_range: FAIL to find selector %u, returning -EINVAL", selector);
+	dump_stack();
 
 	return -EINVAL;
 }

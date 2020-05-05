@@ -4,6 +4,8 @@
  * Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
  */
 
+#define DEBUG
+
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
@@ -139,8 +141,12 @@ static int rpm_reg_set_voltage(struct regulator_dev *rdev,
 	vreg->uv_updated = 1;
 
 	ret = rpm_reg_write_active(vreg);
-	if (ret)
+	if (ret) {
 		vreg->uV = old_uV;
+		pr_err("%s:    failed to set voltage to %d uV (selector: %u)", rdev->desc->name, min_uV, *selector);
+	} else {
+		pr_debug("%s:    OK, changed voltage to %d uV (selector: %u)", rdev->desc->name, min_uV, *selector);
+	}
 
 	return ret;
 }
