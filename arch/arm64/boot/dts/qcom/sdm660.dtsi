@@ -371,6 +371,20 @@
 					bias-pull-down;		/* pull down */
 				};
 			};
+
+			/* this is for camera_focus / camera_snapshot keys */
+			gpio_keys_active: gpio_keys_active {
+				pinmux {
+					pins = "gpio64", "gpio113";
+					function = "gpio";
+				};
+
+				pinconf {
+					pins = "gpio64", "gpio113";
+					drive-strength = <2>;
+					bias-pull-up;
+				};
+			};
 		};
 
 		spmi_bus: spmi@800f000 {

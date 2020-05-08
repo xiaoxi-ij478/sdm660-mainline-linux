@@ -5,9 +5,11 @@
 
 /dts-v1/;
 
-#include "sdm660.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/pinctrl/qcom,pmic-gpio.h>
 #include <dt-bindings/spmi/spmi.h>
 #include <dt-bindings/input/linux-event-codes.h>
+#include "sdm660.dtsi"
 
 / {
 	model = "Xiaomi Redmi Note 7";
@@ -313,7 +315,7 @@
 				compatible = "qcom,pm8941-resin";
 				interrupts = <0x0 0x8 1 IRQ_TYPE_EDGE_BOTH>;
 				interrupt-parent = <&spmi_bus>;
-				debounce = <4000>;
+				debounce = <15625>;
 				bias-pull-up;
 				linux,code = <KEY_VOLUMEDOWN>;
 			};
@@ -325,8 +327,19 @@
 			reg-names = "rtc", "alarm";
 			interrupts = <0x0 0x61 0x1 IRQ_TYPE_EDGE_RISING>;
 		};
-		
-		/* also: temp alarm, gpios, coincell, vadc, charger, pdphy, rradc, fuelgauge */
+
+		pm660_gpios: gpios@c000 {
+			// status = "disabled";
+			compatible = "qcom,pm660-gpio", "qcom,spmi-gpio";
+			reg = <0xc000>;
+			gpio-controller;
+			gpio-ranges = <&pm660_gpios 0 0 13>;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+
+		/* also: temp alarm, coincell, vadc, charger, pdphy, rradc, fuelgauge */
 	};
 
 	pm660_lsid1: pmic@1 {
@@ -344,7 +357,46 @@
 		#address-cells = <1>;
 		#size-cells = <0>;
 
-		/* tz temp alarm */
+		pm660l_gpios: gpios@c000 {
+			compatible = "qcom,pm660l-gpio", "qcom,spmi-gpio";
+			reg = <0xc000>;
+			gpio-controller;
+			gpio-ranges = <&pm660l_gpios 0 0 12>;
+			#gpio-cells = <2>;
+			interrupt-controller;
+			#interrupt-cells = <2>;
+			// WTF
+			//interrupt-parent = <&spmi_bus>;
+
+			gpio-line-names =
+				"NC",
+				"LPI_PWR_EN",
+				"CAM_FRONT_ON",
+				"CAM_DVDD_ON",
+				"NC",
+				"NC",
+				"VOL_UP_N",
+				"NC",
+				"WCSS_PWR_REQ",
+				"SLB",
+				"LP4X_CTRL_BUCK_EN",
+				"LP4X_BUCK_MODE";
+
+			vol_up_pin_active: vol_up_pin {
+				pins = "gpio7";
+				function = "normal";
+				input-enable;
+				bias-pull-up;
+				// drive-push-pull;
+				// power-source = <0>;  // default is 0 imo
+				//  0, 1 - probes (but doesn't work)
+				//  2, 3 - doesn't even probe
+				qcom,pull-up-strength = <PMIC_GPIO_PULL_UP_30>; // default for bias-pull-up
+				qcom,drive-strength = <PMIC_GPIO_STRENGTH_NO>; // <PMIC_GPIO_STRENGTH_LOW>;
+			};
+		};
+
+		/* also tz temp alarm */
 	};
 
 	pm660l_lsid3: pmic@3 {
@@ -359,4 +411,25 @@
 
 &tlmm {
 	gpio-reserved-ranges = <8 4>;
+};
+
+/ {
+	gpio_keys {
+		compatible = "gpio-keys";
+		label = "Volume key";
+		autorepeat;
+		pinctrl-names = "default";
+		// pinctrl-0 = <&gpio_keys_active>; // downstream has some weird tlmm pins 64 & 113
+		pinctrl-0 = <&gpio_keys_active>, <&vol_up_pin_active>;
+		// pinctrl-0 = <&vol_up_pin_active>; // this is the pin on the actual pmic gpio
+
+		vol-up {
+			label = "Volume up";
+			gpios = <&pm660l_gpios 7 GPIO_ACTIVE_LOW>;
+			linux,input-type = <EV_KEY>; // this is the default
+			linux,code = <KEY_VOLUMEUP>;
+			debounce-interval = <15>;
+			// wakeup-source; // probably doesn't matter?
+		};
+	};
 };
