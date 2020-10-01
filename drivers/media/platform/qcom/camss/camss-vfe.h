@@ -182,5 +182,6 @@ void msm_vfe_stop_streaming(struct vfe_device *vfe);
 
 extern const struct vfe_hw_ops vfe_ops_4_1;
 extern const struct vfe_hw_ops vfe_ops_4_7;
+extern const struct vfe_hw_ops vfe_ops_4_8;
 
 #endif /* QC_MSM_CAMSS_VFE_H */
