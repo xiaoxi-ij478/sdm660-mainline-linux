@@ -498,7 +498,7 @@ static struct clk_rcg2 byte0_clk_src = {
 		.parent_data = mmcc_xo_dsibyte,
 		.num_parents = 3,
 		.ops = &clk_byte2_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	},
 };
 
@@ -512,7 +512,7 @@ static struct clk_rcg2 byte1_clk_src = {
 		.parent_data = mmcc_xo_dsibyte,
 		.num_parents = 3,
 		.ops = &clk_byte2_ops,
-		.flags = CLK_SET_RATE_PARENT,
+		.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 	},
 };
 
@@ -758,9 +758,9 @@ static struct clk_rcg2 dp_aux_clk_src = {
 };
 
 static const struct freq_tbl ftbl_dp_crypto_clk_src[] = {
-	F(101250, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
-	F(168750, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
-	F(337500, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
+	F(101250000, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
+	F(168750000, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
+	F(337500000, P_DP_PHY_PLL_VCO_DIV, 4, 0, 0),
 	{ }
 };
 
@@ -799,9 +799,9 @@ static struct clk_rcg2 dp_gtc_clk_src = {
 };
 
 static const struct freq_tbl ftbl_dp_link_clk_src[] = {
-	F(162000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
-	F(270000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
-	F(540000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
+	F(162000000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
+	F(270000000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
+	F(540000000, P_DP_PHY_PLL_LINK_CLK, 2, 0, 0),
 	{ }
 };
 
@@ -2047,16 +2047,16 @@ static const struct freq_tbl ftbl_axi_clk_src[] = {
 
 /* RO to linux */
 static struct clk_rcg2 axi_clk_src = {
-		.cmd_rcgr = 0xd000,
-		.hid_width = 5,
-		.parent_map = mmcc_xo_mmpll0_mmpll4_mmpll7_mmpll10_gpll0_gpll0_div_map,
-		.freq_tbl = ftbl_axi_clk_src,
-		.clkr.hw.init = &(struct clk_init_data){
-				.name = "axi_clk_src",
-				.parent_data = mmcc_xo_mmpll0_mmpll4_mmpll7_mmpll10_gpll0_gpll0_div,
-				.num_parents = 7,
-				.ops = &clk_rcg2_ops,
-		},
+	.cmd_rcgr = 0xd000,
+	.hid_width = 5,
+	.parent_map = mmcc_xo_mmpll0_mmpll4_mmpll7_mmpll10_gpll0_gpll0_div_map,
+	.freq_tbl = ftbl_axi_clk_src,
+	.clkr.hw.init = &(struct clk_init_data){
+		.name = "axi_clk_src",
+		.parent_data = mmcc_xo_mmpll0_mmpll4_mmpll7_mmpll10_gpll0_gpll0_div,
+		.num_parents = 7,
+		.ops = &clk_rcg2_ops,
+	},
 };
 
 static struct clk_branch mdss_axi_clk = {
@@ -2133,7 +2133,7 @@ static struct clk_branch mdss_byte0_intf_clk = {
 			.name = "mdss_byte0_intf_clk",
 			.parent_hws = (const struct clk_hw *[]){ &mdss_byte0_intf_div_clk.clkr.hw },
 			.num_parents = 1,
-			.flags = CLK_SET_RATE_PARENT,
+			.flags = CLK_SET_RATE_PARENT | CLK_GET_RATE_NOCACHE,
 			.ops = &clk_branch2_ops,
 		},
 	},
