@@ -51,6 +51,8 @@ properties:
       - sony,kirin-nt36672a-truly
         # Sony mermaid nt36672a Tianma FHD+ IPS LCD panel
       - sony,mermaid-nt36672a-tianma
+        # Asus Zenfone Max Pro M1 (x00td) nt36672_1080p_video_txd FHD+ IPS LCD Panel
+      - asus,nt36672-txd
 
   reg:
     maxItems: 1
