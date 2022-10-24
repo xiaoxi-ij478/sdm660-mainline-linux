@@ -172,6 +172,14 @@
 		regulator-always-on;
 		regulator-boot-on;
 	};
+
+	battery: battery {
+			compatible = "simple-battery";
+
+			charge-full-design-microamp-hours = <5000000>;
+			voltage-min-design-microvolt = <3400000>;
+			voltage-max-design-microvolt = <4350000>;
+	};
 };
 
 &blsp2_uart1 {
@@ -642,4 +650,21 @@
 &venus {
 	status = "okay";
 	firmware-name = "qcom/venus-4.4/venus.mdt";
+};
+
+&pm660_charger {
+	status = "okay";
+	monitored-battery = <&battery>;
+};
+
+&pm660_fg {
+	status = "okay";
+	monitored-battery = <&battery>;
+	qcom,battery-capacity-ua = <5000000>;
+	qcom,min-voltage-uv= <3400000>;
+	qcom,max-voltage-uv= <4350000>;
+};
+
+&pm660_rradc {
+	status = "okay";
 };
