@@ -638,10 +638,6 @@
 			compatible = "qcom,sdm630-smmu-v2", "qcom,smmu-v2";
 			reg = <0x016c0000 0x40000>;
 
-			assigned-clocks = <&rpmcc RPM_SMD_AGGR2_NOC_CLK>;
-			assigned-clock-rates = <1000>;
-			clocks = <&rpmcc RPM_SMD_AGGR2_NOC_CLK>;
-			clock-names = "bus";
 			#global-interrupts = <2>;
 			#iommu-cells = <1>;
 			qcom,bypass-cbndx = /bits/ 8 <6>;
@@ -689,16 +685,12 @@
 			compatible = "qcom,sdm660-a2noc";
 			reg = <0x01704000 0xc100>;
 			#interconnect-cells = <1>;
-			clock-names = "bus",
-				      "bus_a",
-				      "ipa",
+			clock-names = "ipa",
 				      "ufs_axi",
 				      "aggre2_ufs_axi",
 				      "aggre2_usb3_axi",
 				      "cfg_noc_usb2_axi";
-			clocks = <&rpmcc RPM_SMD_AGGR2_NOC_CLK>,
-				 <&rpmcc RPM_SMD_AGGR2_NOC_A_CLK>,
-				 <&rpmcc RPM_SMD_IPA_CLK>,
+			clocks = <&rpmcc RPM_SMD_IPA_CLK>,
 				 <&gcc GCC_UFS_AXI_CLK>,
 				 <&gcc GCC_AGGRE2_UFS_AXI_CLK>,
 				 <&gcc GCC_AGGRE2_USB3_AXI_CLK>,
@@ -1250,20 +1242,16 @@
 				 <&gcc GCC_USB30_MASTER_CLK>,
 				 <&gcc GCC_AGGRE2_USB3_AXI_CLK>,
 				 <&gcc GCC_USB30_SLEEP_CLK>,
-				 <&gcc GCC_USB30_MOCK_UTMI_CLK>,
-				 <&rpmcc RPM_SMD_AGGR2_NOC_CLK>;
+				 <&gcc GCC_USB30_MOCK_UTMI_CLK>;
 			clock-names = "cfg_noc",
 				      "core",
 				      "iface",
 				      "sleep",
-				      "mock_utmi",
-				      "bus";
+				      "mock_utmi";
 
 			assigned-clocks = <&gcc GCC_USB30_MOCK_UTMI_CLK>,
-					  <&gcc GCC_USB30_MASTER_CLK>,
-					  <&rpmcc RPM_SMD_AGGR2_NOC_CLK>;
-			assigned-clock-rates = <19200000>, <120000000>,
-					       <19200000>;
+					  <&gcc GCC_USB30_MASTER_CLK>;
+			assigned-clock-rates = <19200000>, <120000000>;
 
 			interrupts = <GIC_SPI 347 IRQ_TYPE_LEVEL_HIGH>,
 				     <GIC_SPI 243 IRQ_TYPE_LEVEL_HIGH>;
