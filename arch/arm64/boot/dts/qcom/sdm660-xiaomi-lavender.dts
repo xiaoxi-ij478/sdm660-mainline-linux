@@ -12,6 +12,8 @@
 #include <dt-bindings/input/input.h>
 #include <dt-bindings/input/gpio-keys.h>
 
+/delete-node/ &zap_shader_region;
+
 / {
 	model = "Xiaomi Redmi Note 7";
 	compatible = "xiaomi,lavender", "qcom,sdm660";
@@ -86,6 +88,14 @@
 			reg = <0x0 0x9d400000 0x0 0x23ff000>;
 			no-map;
 		};
+
+/* from downstream dmesg:
+ * subsys-pil-tz soc:qcom,kgsl-hyp: a512_zap: loading from 0x00000000fc400000 to 0x00000000fc402000 */
+		zap_shader_region: gpu@fc400000 {
+			compatible = "shared-dma-pool";
+			reg = <0x0 0xfc400000 0x0 0x2000>;
+			no-map;
+		};
 	};
 
 	/*
@@ -95,6 +105,82 @@
 	extcon_usb: extcon-usb {
 		compatible = "linux,extcon-usb-gpio";
 		id-gpios = <&tlmm 58 GPIO_ACTIVE_HIGH>;
+	};
+};
+
+&adreno_gpu {
+	status = "okay";
+	//status = "disabled";
+
+	zap-shader {
+		memory-region = <&zap_shader_region>;
+		firmware-name = "qcom/a512_zap.mdt";
+	};
+};
+
+&gpu_sdm660_opp_table {
+	compatible = "operating-points-v2";
+
+	/*
+	 * 775MHz is only available on the highest speed bin
+	 * Though it cannot be used for now due to interconnect
+	 * framework not supporting multiple frequencies
+	 * at the same opp-level
+
+	opp-750000000 {
+		opp-hz = /bits/ 64 <750000000>;
+		opp-level = <RPM_SMD_LEVEL_TURBO>;
+		opp-peak-kBps = <5412000>;
+		opp-supported-hw = <0xCHECKME>;
+	}; */
+
+	opp-700000000 {
+		opp-hz = /bits/ 64 <700000000>;
+		opp-level = <RPM_SMD_LEVEL_TURBO>;
+		opp-peak-kBps = <5184000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-647000000 {
+		opp-hz = /bits/ 64 <647000000>;
+		opp-level = <RPM_SMD_LEVEL_NOM_PLUS>;
+		opp-peak-kBps = <4068000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-588000000 {
+		opp-hz = /bits/ 64 <588000000>;
+		opp-level = <RPM_SMD_LEVEL_NOM>;
+		opp-peak-kBps = <3072000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-465000000 {
+		opp-hz = /bits/ 64 <465000000>;
+		opp-level = <RPM_SMD_LEVEL_SVS_PLUS>;
+		opp-peak-kBps = <2724000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-370000000 {
+		opp-hz = /bits/ 64 <370000000>;
+		opp-level = <RPM_SMD_LEVEL_SVS>;
+		opp-peak-kBps = <2188000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-266000000 {
+		opp-hz = /bits/ 64 <266000000>;
+		opp-level = <RPM_SMD_LEVEL_LOW_SVS>;
+		opp-peak-kBps = <1648000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-160000000 {
+		opp-hz = /bits/ 64 <160000000>;
+		opp-level = <RPM_SMD_LEVEL_MIN_SVS>;
+		opp-peak-kBps = <1200000>;
+		opp-supported-hw = <0xff>;
 	};
 };
 
@@ -140,7 +226,98 @@
 	};
 };
 
+&gpucc {
+	status = "okay";
+};
+
+&kgsl_smmu {
+	status = "okay";
+};
+
 &lpass_smmu {
+	status = "okay";
+};
+
+&mdss {
+	status = "okay";
+};
+
+&mdss_dsi0 {
+	status = "okay";
+
+	#address-cells = <1>;
+	#size-cells = <0>;
+	vdd-supply = <&vreg_l1b_0p925>;
+	vdda-supply = <&vreg_l1a_1p225>;
+	//vdda-1p2-supply = <0x109>; // pm660_ldoa1
+	//vdda-0p9-supply = <0x105>; // pm660l_ldob1
+	//vdda-3p3-supply = <0x197>; // pm660l_ldob6
+	//wqhd-vddio-supply = <0x17e>; // pm660_ldoa11
+
+	panel@0 {
+		//compatible = "tianma,nt36672a-fhdplus-lavender-simple";
+		compatible = "tianma,xiaomi-lavender-fhdplus-video";
+		reg = <0>;
+
+		backlight = <&pm660l_wled>;
+
+		reset-gpios = <&tlmm 53 GPIO_ACTIVE_HIGH>; // not used by panel-simple
+		//disp-te-gpios = <&tlmm 59 GPIO_ACTIVE_HIGH>; // used by msm dsi host
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
+
+		vddio-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
+		// supply is the same for touchscreen
+
+		port {
+			panel_in: endpoint {
+				remote-endpoint = <&mdss_dsi0_out>;
+			};
+		};
+	};
+};
+
+&mdss_dsi0_out {
+	data-lanes = <0 1 2 3>;
+	remote-endpoint = <&panel_in>;
+};
+
+&mdss_dsi0_phy {
+	vcca-supply = <&vreg_l1b_0p925>;
+	status = "okay";
+};
+
+&mdss_dsi1 {
+	status = "disabled";
+	//status = "okay";
+};
+
+/* clocks from dsi1_phy are required to probe mmcc? */
+/* dsi1_phy will not probe (it's child of mdss, which will not probe until mmcc, */
+/* mmcc will not probe without dsi1_phy ? deadlock ? */
+&mdss_dsi1_phy {
+	status = "disabled";
+	//status = "okay";
+};
+
+&mmcc {
+	status = "okay";
+	/* override clocks to exclude mdss_dsi1_phy dependency */
+	// questionable decision ^^
+//	clocks = <&rpmcc RPM_SMD_XO_CLK_SRC>,
+//		 <&sleep_clk>,
+//		 <&gcc GCC_MMSS_GPLL0_CLK>,
+//		 <&gcc GCC_MMSS_GPLL0_DIV_CLK>,
+//		 <&mdss_dsi0_phy 1>,
+//		 <&mdss_dsi0_phy 0>,
+//		 <0>, /* <&mdss_dsi1_phy 1>, */
+//		 <0>, /* <&mdss_dsi1_phy 0>, */
+//		 <0>,
+//		 <0>;
+};
+
+&mmss_smmu {
 	status = "okay";
 };
 
@@ -486,6 +663,20 @@
 
 &tlmm {
 	gpio-reserved-ranges = <8 4>;
+
+	mdss_dsi_active: mdss-dsi-active-state {
+		pins = "gpio53";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-disable;
+	};
+
+	mdss_te_active: mdss-te-active-state {
+		pins = "gpio59";
+		function = "mdp_vsync";
+		drive-strength = <2>;
+		bias-pull-down;
+	};
 
 	ts_pins_active: ts-pins-active-state {
 		pins = "gpio66", "gpio67";
