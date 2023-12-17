@@ -235,12 +235,16 @@ int qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 			max_addr = ALIGN(phdr->p_paddr + phdr->p_memsz, SZ_4K);
 	}
 
+	dev_info(dev, "qcom_mdt_pas_init: PAS %d: fw_name %s, relocate = %s, addr [%08llx-%08llx]",
+		pas_id, fw_name, relocate ? "true" : "false", min_addr, max_addr);
+
 	metadata = qcom_mdt_read_metadata(fw, &metadata_len, fw_name, dev);
 	if (IS_ERR(metadata)) {
 		ret = PTR_ERR(metadata);
 		dev_err(dev, "error %d reading firmware %s metadata\n", ret, fw_name);
 		goto out;
 	}
+	dev_info(dev, "qcom_mdt_pas_init: read fw metadata OK: %px, sz %lu", metadata, metadata_len);
 
 	ret = qcom_scm_pas_init_image(pas_id, metadata, metadata_len, ctx);
 	kfree(metadata);
@@ -249,6 +253,7 @@ int qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 		dev_err(dev, "error %d initializing firmware %s\n", ret, fw_name);
 		goto out;
 	}
+	dev_info(dev, "qcom_mdt_pas_init: qcom_scm_pas_init_image() OK");
 
 	if (relocate) {
 		ret = qcom_scm_pas_mem_setup(pas_id, mem_phys, max_addr - min_addr);
@@ -257,6 +262,7 @@ int qcom_mdt_pas_init(struct device *dev, const struct firmware *fw,
 			dev_err(dev, "error %d setting up firmware %s\n", ret, fw_name);
 			goto out;
 		}
+		dev_info(dev, "qcom_mdt_pas_init: qcom_scm_pas_mem_setup() OK");
 	}
 
 out:
