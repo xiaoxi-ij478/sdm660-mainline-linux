@@ -658,12 +658,16 @@ static int a5xx_zap_shader_init(struct msm_gpu *gpu)
 	 * If the zap shader is already loaded into memory we just need to kick
 	 * the remote processor to reinitialize it
 	 */
-	if (loaded)
+	if (loaded) {
+		dev_info(gpu->dev->dev, "a5xx_zap_shader_init: resuming");
 		return a5xx_zap_shader_resume(gpu);
+	}
 
+	dev_info(gpu->dev->dev, "a5xx_zap_shader_init: loading for the first time");
 	ret = adreno_zap_shader_load(gpu, GPU_PAS_ID);
 
 	loaded = !ret;
+	if (!loaded) dev_err(gpu->dev->dev, "a5xx_zap_shader_init: ERROR: not loaded :(");
 	return ret;
 }
 

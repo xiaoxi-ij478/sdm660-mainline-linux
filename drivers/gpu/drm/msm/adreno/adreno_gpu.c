@@ -138,13 +138,14 @@ static int zap_shader_load_mdt(struct msm_gpu *gpu, const char *fwname,
 	 * we know which of the two cases it is:
 	 */
 	if (signed_fwname || (to_adreno_gpu(gpu)->fwloc == FW_LOCATION_LEGACY)) {
+		dev_info(dev, "Loading adreno zap mdt from %s", fwname);
 		ret = qcom_mdt_load(dev, fw, fwname, pasid,
 				mem_region, mem_phys, mem_size, NULL);
 	} else {
 		char *newname;
 
 		newname = kasprintf(GFP_KERNEL, "qcom/%s", fwname);
-
+		dev_info(dev, "Loading adreno zap mdt from %s", newname);
 		ret = qcom_mdt_load(dev, fw, newname, pasid,
 				mem_region, mem_phys, mem_size, NULL);
 		kfree(newname);
@@ -152,16 +153,20 @@ static int zap_shader_load_mdt(struct msm_gpu *gpu, const char *fwname,
 	if (ret)
 		goto out;
 
+	dev_info(dev, "Calling SCM to auth adreno zap firmware...");
+
 	/* Send the image to the secure world */
 	ret = qcom_scm_pas_auth_and_reset(pasid);
+	dev_info(dev, "Returned from SCM call: %d", ret);
 
 	/*
 	 * If the scm call returns -EOPNOTSUPP we assume that this target
 	 * doesn't need/support the zap shader so quietly fail
 	 */
-	if (ret == -EOPNOTSUPP)
+	if (ret == -EOPNOTSUPP) {
+		dev_err(dev, "SCM call returned -EOPNOTSUPP, zap_available is now false");
 		zap_available = false;
-	else if (ret)
+	} else if (ret)
 		DRM_DEV_ERROR(dev, "Unable to authorize the image\n");
 
 out:
@@ -1012,6 +1017,7 @@ static int adreno_get_pwrlevels(struct device *dev,
 	dev_pm_opp_put(opp);
 
 	DBG("fast_rate=%u, slow_rate=27000000", gpu->fast_rate);
+	dev_dbg(dev, "adreno_get_pwrlevels: fast_rate=%u", gpu->fast_rate);
 
 	return 0;
 }
