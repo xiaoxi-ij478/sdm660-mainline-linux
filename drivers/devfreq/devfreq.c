@@ -356,6 +356,9 @@ static int devfreq_set_target(struct devfreq *devfreq, unsigned long new_freq,
 	else
 		cur_freq = devfreq->previous_freq;
 
+	// too noisy
+	//printk(KERN_ERR "devfreq_set_target: new: %ul, old: %ul\n", new_freq, cur_freq);
+
 	freqs.old = cur_freq;
 	freqs.new = new_freq;
 	devfreq_notify_transition(devfreq, &freqs, DEVFREQ_PRECHANGE);
@@ -378,9 +381,11 @@ static int devfreq_set_target(struct devfreq *devfreq, unsigned long new_freq,
 	freqs.new = new_freq;
 	devfreq_notify_transition(devfreq, &freqs, DEVFREQ_POSTCHANGE);
 
-	if (devfreq_update_status(devfreq, new_freq))
+	if (devfreq_update_status(devfreq, new_freq)) {
 		dev_warn(&devfreq->dev,
 			 "Couldn't update frequency transition information.\n");
+		dump_stack();
+	}
 
 	devfreq->previous_freq = new_freq;
 
