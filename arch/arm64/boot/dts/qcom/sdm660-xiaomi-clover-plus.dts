@@ -101,18 +101,18 @@
 	//wqhd-vddio-supply = <0x17e>; // pm660_ldoa11
         
 	panel@0 {
-		compatible = "boe,xiaomi-clover-plus-video";
+		compatible = "boe,tv101wum-nx0";
 		reg = <0>;
 
 		backlight = <&i2c_backlight>;
 
-		reset-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>; // not used by panel-simple
+		enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>; // not used by panel-simple
 		//disp-te-gpios = <&pm660l_gpios GPIO_ACTIVE_HIGH>; // used by msm dsi host
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&mdss_dsi_active &mdss_te_active &lcd_bl_en_default>;
 
-		vddio-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
+		pp1800-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
 		// supply is the same for touchscreen
 
 		port {
