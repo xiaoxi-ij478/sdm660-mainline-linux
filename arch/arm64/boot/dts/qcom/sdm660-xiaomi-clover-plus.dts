@@ -9,12 +9,26 @@
 / {
 	model = "Xiaomi Mi Pad 4 Plus";	
 	compatible = "xiaomi,clover-plus", "qcom,sdm660", "qcom,sdm660-mtp", "qcom,mtp";
+	vreg_bl_vddio: lcd-backlight-vddio {
+		compatible = "regulator-fixed";
+		regulator-name = "vreg_bl_vddio";
+		regulator-min-microvolt = <3150000>;
+		regulator-max-microvolt = <3150000>;
+
+		gpio = <&tlmm 72 0>;
+		enable-active-high;
+
+		startup-delay-us = <70000>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&lcd_bl_en_default>;
+	};
 };
 
 &blsp_i2c3 {
 	status = "okay";
 	touchscreen@5d {
-		compatible = "goodix,gt917d";
+		compatible = "goodix,gt9110";
 		reg = <0x5d>;
 		AVDD28-supply = <&vreg_l3b_3p3>;
 		VDDIO-supply = <&vreg_l11a_1p8>;
@@ -35,12 +49,12 @@
 };
 
 &blsp_i2c8 {
-	status = "okay";
+	status = "disabled";
 	i2c_backlight: backlight@2c {
 		compatible = "ti,lp8556";
 		reg = <0x2c>;
 		bl-name = "lcd-bl";
-        init-brt = /bits/ 8 <0x10>;
+		enable-supply = <&vreg_bl_vddio>;
 		rom_16h {
 			rom-addr = /bits/ 8 <0x16>;
 			rom-val = /bits/ 8 <0x0F>;
@@ -89,7 +103,7 @@
 };
 
 &mdss_dsi0 {
-	status = "okay";
+	status = "disabled";
 
 	#address-cells = <1>;
 	#size-cells = <0>;
@@ -101,18 +115,18 @@
 	//wqhd-vddio-supply = <0x17e>; // pm660_ldoa11
         
 	panel@0 {
-		compatible = "boe,tv101wum-nx0";
+		compatible = "boe,nt51021-10wu";
 		reg = <0>;
 
 		backlight = <&i2c_backlight>;
 
-		enable-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>; // not used by panel-simple
+		reset-gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>; // not used by panel-simple
 		//disp-te-gpios = <&pm660l_gpios GPIO_ACTIVE_HIGH>; // used by msm dsi host
 
 		pinctrl-names = "default";
-		pinctrl-0 = <&mdss_dsi_active &mdss_te_active &lcd_bl_en_default>;
+		pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
 
-		pp1800-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
+		//pp1800-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
 		// supply is the same for touchscreen
 
 		port {
@@ -139,7 +153,8 @@
 	lcd_bl_en_default: lcd-bl-en-default-state {
 		pins = "gpio72";
 		function = "gpio";
-		drive-strength = <8>;
+		drive-strength = <10>;
+		output-low;
 		bias-disable;
 	};
 
