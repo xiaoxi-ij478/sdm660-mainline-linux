@@ -11,6 +11,7 @@
 #include <dt-bindings/input/gpio-keys.h>
 
 /delete-node/ &adsp_region;
+/delete-node/ &cdsp_region;
 /delete-node/ &buffer_mem;
 /delete-node/ &mba_region;
 /delete-node/ &zap_shader_region;
@@ -23,6 +24,7 @@
 
 	aliases {
 		serial0 = &blsp1_uart2;
+		serial1 = &blsp2_uart1;
 	};
 	chosen {
 		#address-cells = <2>;
@@ -87,7 +89,7 @@
 			reg = <0x0 0x94900000 0x0 0x200000>;
 			no-map;
 		};
-		buffer_mem: buffer_region@94b00000 {
+		cdsp_region: cdsp@94b00000 {
 			reg = <0x00 0x94b00000 0x00 0x600000>;
 			no-map;
 		};
@@ -451,7 +453,7 @@
 };
 
 &blsp1_uart2 {
-    status = "disabled";
+    status = "okay";
 };
 
 &gpucc{
@@ -561,8 +563,13 @@
 };
 
 &adsp_pil {
-    firmware-name = "adsp.mdt";
-    status = "okay";
+    	firmware-name = "adsp.mdt";
+    	status = "okay";
+};
+
+&cdsp_pil {
+	firmware-name = "cdsp.mdt";
+	status = "okay";
 };
 
 &remoteproc_mss {

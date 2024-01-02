@@ -9,6 +9,12 @@
 / {
 	model = "Xiaomi Mi Pad 4 Plus";	
 	compatible = "xiaomi,clover-plus", "qcom,sdm660", "qcom,sdm660-mtp", "qcom,mtp";
+	battery: battery {
+		compatible = "simple-battery";
+		charge-full-design-microamp-hours = <8620000>;
+		voltage-min-design-microvolt = <3400000>;
+		voltage-max-design-microvolt = <4400000>;
+	};
 	vreg_bl_vddio: lcd-backlight-vddio {
 		compatible = "regulator-fixed";
 		regulator-name = "vreg_bl_vddio";
@@ -17,7 +23,6 @@
 
 		gpio = <&tlmm 72 0>;
 		enable-active-high;
-
 		startup-delay-us = <70000>;
 
 		pinctrl-names = "default";
@@ -102,6 +107,25 @@
 	};
 };
 
+&pm660_charger {
+	monitored-battery = <&battery>;
+
+	status = "okay";
+};
+
+&pm660_fg {
+	monitored-battery = <&battery>;
+	qcom,battery-capacity-ua = <8620000>;
+	qcom,min-voltage-uv = <3400000>;
+	qcom,max-voltage-uv = <4400000>;
+
+	status = "okay";
+};
+
+&pm660_rradc {
+	status = "okay";
+};
+
 &mdss_dsi0 {
 	status = "disabled";
 
@@ -154,7 +178,7 @@
 		pins = "gpio72";
 		function = "gpio";
 		drive-strength = <10>;
-		output-low;
+		output-high;
 		bias-disable;
 	};
 

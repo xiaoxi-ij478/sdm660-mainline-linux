@@ -488,6 +488,11 @@
 			no-map;
 		};
 
+		cdsp_region: cdsp@94a00001 {
+			reg = <0x0 0x94a00000 0x0 0x100000>;
+			no-map;
+		};
+
 		venus_region: venus@9f800000 {
 			reg = <0x0 0x9f800000 0x0 0x800000>;
 			no-map;
@@ -536,6 +541,26 @@
 		};
 
 		adsp_smp2p_in: slave-kernel {
+			qcom,entry-name = "slave-kernel";
+			interrupt-controller;
+			#interrupt-cells = <2>;
+		};
+	};
+
+	smp2p-cdsp {
+		compatible = "qcom,smp2p";
+		qcom,smem = <94>, <432>;
+		interrupts = <GIC_SPI 514 IRQ_TYPE_EDGE_RISING>;
+		mboxes = <&apcs_glb 29>;
+		qcom,local-pid = <0>;
+		qcom,remote-pid = <5>;
+
+		cdsp_smp2p_out: master-kernel {
+			qcom,entry-name = "master-kernel";
+			#qcom,smem-state-cells = <1>;
+		};
+
+		cdsp_smp2p_in: slave-kernel {
 			qcom,entry-name = "slave-kernel";
 			interrupt-controller;
 			#interrupt-cells = <2>;
@@ -2324,6 +2349,36 @@
 			};
 		};
 
+		cdsp_pil: remoteproc@1a300000 {
+			compatible = "qcom,sdm660-cdsp-pas";
+			reg = <0x1a300000 0x00100>;
+			interrupts-extended = 
+				<&intc GIC_SPI 518 IRQ_TYPE_EDGE_RISING>,
+				<&cdsp_smp2p_in 0 IRQ_TYPE_EDGE_RISING>,
+				<&cdsp_smp2p_in 1 IRQ_TYPE_EDGE_RISING>,
+				<&cdsp_smp2p_in 2 IRQ_TYPE_EDGE_RISING>,
+				<&cdsp_smp2p_in 3 IRQ_TYPE_EDGE_RISING>;
+			interrupt-names = "wdog", "fatal", "ready",
+				"handover", "stop-ack";
+
+			clocks = <&rpmcc RPM_SMD_XO_CLK_SRC>;
+			clock-names = "xo";
+
+			memory-region = <&cdsp_region>;
+			power-domains = <&rpmpd SDM660_VDDCX>;
+			power-domain-names = "cx";
+
+			qcom,smem-states = <&cdsp_smp2p_out 0>;
+			qcom,smem-state-names = "stop";	
+			glink-edge {
+				interrupts = <GIC_SPI 513 IRQ_TYPE_EDGE_RISING>;
+				
+				label = "cdsp";
+				mboxes = <&apcs_glb 29>;
+				qcom,remote-pid = <5>;
+			};
+		};
+
 		gnoc: interconnect@17900000 {
 			compatible = "qcom,sdm660-gnoc";
 			reg = <0x17900000 0xe000>;
@@ -2422,8 +2477,8 @@
 			reg = <0x18800000 0x800000>;
 			reg-names = "membase";
 			memory-region = <&wlan_msa_mem>;
-			clocks = <&rpmcc RPM_SMD_RF_CLK1_PIN>;
-			clock-names = "cxo_ref_clk_pin";
+			clocks = <&rpmcc RPM_SMD_RF_CLK1_PIN>, <&rpmcc RPM_SMD_QDSS_CLK>;
+			clock-names = "cxo_ref_clk_pin", "qdss";
 			interrupts =
 				<GIC_SPI 413 IRQ_TYPE_LEVEL_HIGH>,
 				<GIC_SPI 414 IRQ_TYPE_LEVEL_HIGH>,
