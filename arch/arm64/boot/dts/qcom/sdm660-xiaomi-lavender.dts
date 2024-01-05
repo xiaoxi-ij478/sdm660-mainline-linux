@@ -223,6 +223,8 @@
 		max-speed = <3200000>;
 		/* Path is relative to the qca/ subdir in lib/firmware. */
 		/* firmware-name = "crnv21.bin"; */ // default
+
+		clocks = <&rpmcc RPM_SMD_RF_CLK1_PIN>;
 	};
 };
 
