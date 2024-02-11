@@ -38,6 +38,8 @@
 			height = <2340>;
 			stride = <(1080 * 4)>;
 			format = "a8r8g8b8";
+
+			panel = <&panel>;
 		};
 	};
 
@@ -132,7 +134,7 @@
 		opp-level = <RPM_SMD_LEVEL_TURBO>;
 		opp-peak-kBps = <5412000>;
 		opp-supported-hw = <0xCHECKME>;
-	}; */
+	};
 
 	opp-700000000 {
 		opp-hz = /bits/ 64 <700000000>;
@@ -150,6 +152,13 @@
 
 	opp-588000000 {
 		opp-hz = /bits/ 64 <588000000>;
+		opp-level = <RPM_SMD_LEVEL_NOM>;
+		opp-peak-kBps = <3072000>;
+		opp-supported-hw = <0xff>;
+	};
+
+	opp-500000000 {
+		opp-hz = /bits/ 64 <500000000>;
 		opp-level = <RPM_SMD_LEVEL_NOM>;
 		opp-peak-kBps = <3072000>;
 		opp-supported-hw = <0xff>;
@@ -174,7 +183,7 @@
 		opp-level = <RPM_SMD_LEVEL_LOW_SVS>;
 		opp-peak-kBps = <1648000>;
 		opp-supported-hw = <0xff>;
-	};
+	};*/
 
 	opp-160000000 {
 		opp-hz = /bits/ 64 <160000000>;
@@ -249,28 +258,35 @@
 
 	#address-cells = <1>;
 	#size-cells = <0>;
-	vdd-supply = <&vreg_l1b_0p925>;
+	//vdd-supply = <&vreg_l1b_0p925>;
 	vdda-supply = <&vreg_l1a_1p225>;
+	// drivers/gpu/drm/msm/dsi/dsi_cfg.c L149:
+	// sdm660 dsi supports only one regulator named "vdda"
+
+	// downstream:
 	//vdda-1p2-supply = <0x109>; // pm660_ldoa1
 	//vdda-0p9-supply = <0x105>; // pm660l_ldob1
 	//vdda-3p3-supply = <0x197>; // pm660l_ldob6
 	//wqhd-vddio-supply = <0x17e>; // pm660_ldoa11
 
-	panel@0 {
-		//compatible = "tianma,nt36672a-fhdplus-lavender-simple";
-		compatible = "tianma,xiaomi-lavender-fhdplus-video";
+	panel: panel@0 {
+		compatible = "tianma,nt36672a-fhdplus-lavender-simple";
+		//compatible = "tianma,nt36672a-fhdplus-lavender-generated";
 		reg = <0>;
 
 		backlight = <&pm660l_wled>;
 
-		reset-gpios = <&tlmm 53 GPIO_ACTIVE_HIGH>; // not used by panel-simple
-		//disp-te-gpios = <&tlmm 59 GPIO_ACTIVE_HIGH>; // used by msm dsi host
+		reset-gpios = <&tlmm 53 GPIO_ACTIVE_HIGH>;
 
 		pinctrl-names = "default";
 		pinctrl-0 = <&mdss_dsi_active &mdss_te_active>;
 
-		vddio-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
-		// supply is the same for touchscreen
+		// vddio-supply = <&vreg_l11a_1p8>; // wqhd-vddio-supply
+		// ^^ supply is the same for touchscreen, don't touch it
+
+		/* these sizes provide DPI information for simplefb driver */
+		width-mm = <67>;
+		height-mm = <145>;
 
 		port {
 			panel_in: endpoint {
