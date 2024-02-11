@@ -166,6 +166,8 @@ static int nt36672a_panel_power_on(struct nt36672a_panel *pinfo)
 	 * AOSP, we needed to bump it upto 200ms otherwise we get white screen sometimes.
 	 * FIXME: Try to reduce this 200ms to a lesser value.
 	 */
+	gpiod_set_value(pinfo->reset_gpio, 0);
+	msleep(200);
 	gpiod_set_value(pinfo->reset_gpio, 1);
 	msleep(200);
 	gpiod_set_value(pinfo->reset_gpio, 0);
@@ -819,6 +821,7 @@ static int nt36672a_panel_probe(struct mipi_dsi_device *dsi)
 		return err;
 	}
 
+	dev_info(&dsi->dev, "nt36672a_panel: probe complete OK");
 	return 0;
 }
 
