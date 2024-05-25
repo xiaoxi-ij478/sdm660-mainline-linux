@@ -1043,6 +1043,7 @@ int __init early_init_dt_scan_chosen(char *cmdline)
 	const char *p;
 	const void *rng_seed;
 	const void *fdt = initial_boot_params;
+	char* cmdline2 = cmdline;
 
 	node = fdt_path_offset(fdt, "/chosen");
 	if (node < 0)
@@ -1089,6 +1090,19 @@ handle_cmdline:
 	/* No arguments from boot loader, use kernel's  cmdl*/
 	if (!((char *)cmdline)[0])
 		strscpy(cmdline, CONFIG_CMDLINE, COMMAND_LINE_SIZE);
+#endif
+#if defined(CONFIG_CMDLINE_DROP_DANGEROUS_ANDROID_OPTIONS)
+	pr_err("Replacing dangerous cmdline options...");
+	cmdline2 = strstr((const char *)cmdline, "skip_initramfs");
+	if (cmdline2)
+		*cmdline2 = '_';
+	cmdline2 = strstr((const char *)cmdline, "root=");
+	if (cmdline2)
+		*cmdline2 = '_';
+	cmdline2 = strstr((const char *)cmdline, "init=");
+	if (cmdline2)
+		*cmdline2 = '_';
+	pr_err("Command line now is: %s\n", (char*)cmdline);
 #endif
 #endif /* CONFIG_CMDLINE */
 
